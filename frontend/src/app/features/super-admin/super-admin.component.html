@@ -1,0 +1,258 @@
+<div class="super-admin-view animate-fade-in" (click)="isActionsDropdownOpen.set(false)">
+  <!-- Odoo Style Breadcrumb / Action Bar -->
+  <div class="breadcrumb-action-bar page-card">
+    <div class="breadcrumb-left">
+      <span class="breadcrumb-segment" (click)="discardChanges()">Companies</span>
+      @if (viewMode() === 'form') {
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-segment active">{{ isEditing() ? name() : 'New' }}</span>
+      }
+    </div>
+    
+    <div class="action-buttons-right">
+      @if (viewMode() === 'list') {
+        <button class="btn btn-primary" (click)="showCreateForm()">
+          <i data-lucide="plus"></i> New Company
+        </button>
+      } @else {
+        <button class="btn btn-primary" (click)="onSubmit()">
+          Save
+        </button>
+        <button class="btn btn-secondary" (click)="discardChanges()" [disabled]="isLoading()">
+          Discard
+        </button>
+
+        @if (isEditing()) {
+          <div class="dropdown-container">
+            <button class="btn btn-secondary" (click)="toggleActionsDropdown($event)">
+              Actions <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
+            </button>
+            @if (isActionsDropdownOpen()) {
+              <div class="actions-dropdown">
+                <a href="javascript:void(0)" class="dropdown-item" (click)="deleteActiveCompany()">
+                  <i data-lucide="trash-2" style="width: 13px; height: 13px; color: var(--color-danger); margin-right: 6px;"></i> Delete
+                </a>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Messages Alerts -->
+  @if (successMessage()) {
+    <div class="alert alert-success" style="margin-top: 15px;">
+      <span>✅</span> {{ successMessage() }}
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="alert alert-danger" style="margin-top: 15px;">
+      <span>⚠️</span> {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- VIEW 1: LIST VIEW -->
+  @if (viewMode() === 'list') {
+    <div class="list-view-container" style="margin-top: 15px;">
+      <!-- Odoo Filter / Control Row -->
+      <div class="list-control-row page-card">
+        <div class="control-left">
+          <button class="btn btn-secondary btn-sm disabled-link">
+            <i data-lucide="filter" style="width: 13px; height: 13px;"></i> Filters <i data-lucide="chevron-down" style="width: 10px; height: 10px;"></i>
+          </button>
+          <button class="btn btn-secondary btn-sm disabled-link">
+            <i data-lucide="list-filter" style="width: 13px; height: 13px;"></i> Group By <i data-lucide="chevron-down" style="width: 10px; height: 10px;"></i>
+          </button>
+        </div>
+        <div class="control-right">
+          <span class="count-label">{{ companies().length }} companies</span>
+          <div class="pagination-controls">
+            <button class="pagination-btn disabled-link">←</button>
+            <span class="pagination-text">1-{{ companies().length }} of {{ companies().length }}</span>
+            <button class="pagination-btn disabled-link">→</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Data Table -->
+      @if (isLoading() && companies().length === 0) {
+        <div class="loader-placeholder page-card">
+          <div class="spinner-simple"></div> Loading registry entries...
+        </div>
+      } @else if (companies().length === 0) {
+        <div class="empty-placeholder page-card">
+          <i data-lucide="building-2" class="empty-icon"></i>
+          <h4>No companies registered</h4>
+          <p>Create your first business entity to configure ledgers and users.</p>
+          <button class="btn btn-primary" (click)="showCreateForm()">
+            <i data-lucide="plus"></i> Create Company
+          </button>
+        </div>
+      } @else {
+        <div class="list-table-container">
+          <table class="list-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">
+                  <label for="select-all-checkbox" class="sr-only">Select All Companies</label>
+                  <input
+                    id="select-all-checkbox"
+                    type="checkbox"
+                    (change)="toggleSelectAll($event)"
+                    [checked]="selectedCompanyIds().length === companies().length && companies().length > 0"
+                  />
+                </th>
+                <th>Company Name</th>
+                <th>Code</th>
+                <th>GSTIN</th>
+                <th>State Code</th>
+                <th>Books Opening Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (comp of companies(); track comp.id) {
+                <tr 
+                  (click)="showEditForm(comp)" 
+                  class="clickable-row"
+                  [class.selected]="selectedCompanyIds().includes(comp.id)"
+                >
+                  <td style="text-align: center;" (click)="$event.stopPropagation()">
+                    <label [for]="'select-company-' + comp.id" class="sr-only">Select {{ comp.name }}</label>
+                    <input
+                      [id]="'select-company-' + comp.id"
+                      type="checkbox"
+                      [checked]="selectedCompanyIds().includes(comp.id)"
+                      (change)="toggleSelectCompany(comp.id, $event)"
+                    />
+                  </td>
+                  <td style="font-weight: 500; color: var(--color-secondary);">{{ comp.name }}</td>
+                  <td><span class="code-badge-mono">{{ comp.code }}</span></td>
+                  <td>{{ comp.gstNumber }}</td>
+                  <td>{{ comp.gstStateCode }}</td>
+                  <td>{{ comp.booksBeginDate | date:'dd-MMM-yyyy' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- VIEW 2: FORM VIEW -->
+  @if (viewMode() === 'form') {
+    <div class="form-view-container" style="margin-top: 15px;">
+      <div class="glass-card form-page-card">
+        <!-- Form Header Status Bar -->
+        <div class="form-title-bar">
+          <h2 class="form-document-title">
+            {{ isEditing() ? name() : 'New Company' }}
+          </h2>
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            {{ isEditing() ? 'Active' : 'Draft' }}
+          </div>
+        </div>
+
+        <form (submit)="onSubmit(); $event.preventDefault()">
+          <!-- Section 1 -->
+          <div class="form-section-title">Company Profile</div>
+          
+          <div class="form-group">
+            <label class="form-label" for="name">Company Name<span class="required-marker">*</span></label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              class="form-control"
+              placeholder="e.g. Growmart Retailers Ltd"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+              required
+            />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="code">Company Code (5 chars)<span class="required-marker">*</span></label>
+              <input
+                id="code"
+                name="code"
+                type="text"
+                maxlength="5"
+                class="form-control code-input"
+                placeholder="e.g. GMR01"
+                [ngModel]="code()"
+                (ngModelChange)="code.set($event)"
+                [disabled]="isEditing()"
+                required
+              />
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="booksBeginDate">Books Opening Date<span class="required-marker">*</span></label>
+              <input
+                id="booksBeginDate"
+                name="booksBeginDate"
+                type="date"
+                class="form-control"
+                [ngModel]="booksBeginDate()"
+                (ngModelChange)="booksBeginDate.set($event)"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Section 2 -->
+          <div class="form-section-title">GSTIN & Address Details</div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="gstNumber">GST Number<span class="required-marker">*</span></label>
+              <input
+                id="gstNumber"
+                name="gstNumber"
+                type="text"
+                class="form-control"
+                placeholder="e.g. 27AADCG9411K1ZS"
+                [ngModel]="gstNumber()"
+                (ngModelChange)="gstNumber.set($event)"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="gstStateCode">State Code (2 digits)<span class="required-marker">*</span></label>
+              <input
+                id="gstStateCode"
+                name="gstStateCode"
+                type="text"
+                maxlength="2"
+                class="form-control"
+                placeholder="e.g. 27"
+                [ngModel]="gstStateCode()"
+                (ngModelChange)="gstStateCode.set($event)"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="address">Postal Address<span class="required-marker">*</span></label>
+            <textarea
+              id="address"
+              name="address"
+              rows="3"
+              class="form-control"
+              placeholder="Full warehouse or office location address..."
+              [ngModel]="address()"
+              (ngModelChange)="address.set($event)"
+              required
+            ></textarea>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

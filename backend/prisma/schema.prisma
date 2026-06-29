@@ -1,0 +1,254 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  ACCOUNTANT
+  BILLING_STAFF
+}
+
+enum ReportingHead {
+  PL
+  BS
+}
+
+enum NormalBalance {
+  DR
+  CR
+}
+
+enum VoucherStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum VoucherType {
+  PURCHASE
+  SALES_SHOP
+  SALES_ONLINE
+  SALES_RETURN
+  PURCHASE_RETURN
+  PAYMENT
+  RECEIPT
+  CONTRA
+  JOURNAL
+  SCRAP
+  PHYSICAL_STOCK
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model Company {
+  id               Int      @id @default(autoincrement())
+  code             String   @unique
+  name             String
+  gstNumber        String
+  gstStateCode     String
+  booksBeginDate   DateTime
+  address          String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  users            User[]
+  auditLogs        AuditLog[]
+  accountingGroups AccountingGroup[]
+  ledgers          Ledger[]
+  vouchers         Voucher[]
+  ledgerEntries    LedgerEntry[]
+  inventoryGroups  InventoryGroup[]
+  inventoryItems   InventoryItem[]
+  stockLots        StockLot[]
+  units            Unit[]
+  gstRates         GSTRate[]
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  companyId    Int?       @map("company_id")
+  company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role
+  backdateDays Int        @default(0) @map("backdate_days")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id        Int         @id @default(autoincrement())
+  companyId Int?        @map("company_id")
+  company   Company?    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId    Int         @map("user_id")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    AuditAction
+  entity    String
+  entityId  Int         @map("entity_id")
+  oldValue  Json?       @map("old_value")
+  newValue  Json?       @map("new_value")
+  createdAt DateTime    @default(now())
+}
+
+model AccountingGroup {
+  id            Int             @id @default(autoincrement())
+  companyId     Int             @map("company_id")
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code          String
+  name          String
+  parentId      Int?            @map("parent_id")
+  parent        AccountingGroup? @relation("GroupHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children      AccountingGroup[] @relation("GroupHierarchy")
+  reportingHead ReportingHead   @map("reporting_head")
+  normalBalance NormalBalance   @map("normal_balance")
+  isSystem      Boolean         @default(false) @map("is_system")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  ledgers       Ledger[]
+
+  @@unique([companyId, name])
+}
+
+model Ledger {
+  id             Int             @id @default(autoincrement())
+  companyId      Int             @map("company_id")
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  groupId        Int             @map("group_id")
+  group          AccountingGroup @relation(fields: [groupId], references: [id])
+  gstNumber      String?         @map("gst_number")
+  openingBalance Decimal         @map("opening_balance") @db.Decimal(18, 2)
+  isSystem       Boolean         @default(false) @map("is_system")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  vouchers       Voucher[]       @relation("PartyLedger")
+  ledgerEntries  LedgerEntry[]
+
+  @@unique([companyId, name])
+}
+
+model Voucher {
+  id            Int           @id @default(autoincrement())
+  companyId     Int           @map("company_id")
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  type          VoucherType
+  voucherNo     String        @map("voucher_no")
+  refNo         String?       @map("ref_no")
+  date          DateTime
+  status        VoucherStatus
+  partyLedgerId Int           @map("party_ledger_id")
+  partyLedger   Ledger        @relation("PartyLedger", fields: [partyLedgerId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  ledgerEntries LedgerEntry[]
+  stockLots     StockLot[]
+
+  @@unique([companyId, type, voucherNo])
+}
+
+model LedgerEntry {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  voucherId Int      @map("voucher_id")
+  voucher   Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  ledgerId  Int      @map("ledger_id")
+  ledger    Ledger   @relation(fields: [ledgerId], references: [id])
+  date      DateTime
+  debit     Decimal  @db.Decimal(18, 2)
+  credit    Decimal  @db.Decimal(18, 2)
+}
+
+model Unit {
+  id            Int             @id @default(autoincrement())
+  companyId     Int             @map("company_id")
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  formalName    String          @map("formal_name")
+  symbol        String
+  decimalPlaces Int             @default(0) @map("decimal_places")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  inventoryItems InventoryItem[]
+}
+
+model GSTRate {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @map("company_id")
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  igst      Decimal  @db.Decimal(5, 2)
+  cgst      Decimal  @db.Decimal(5, 2)
+  sgst      Decimal  @db.Decimal(5, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventoryItems InventoryItem[]
+}
+
+model InventoryGroup {
+  id        Int               @id @default(autoincrement())
+  companyId Int               @map("company_id")
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  parentId  Int?              @map("parent_id")
+  parent    InventoryGroup?   @relation("InventoryGroupHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children  InventoryGroup[]  @relation("InventoryGroupHierarchy")
+  isSystem  Boolean           @default(false) @map("is_system")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  inventoryItems InventoryItem[]
+
+  @@unique([companyId, name])
+}
+
+model InventoryItem {
+  id         Int            @id @default(autoincrement())
+  companyId  Int            @map("company_id")
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name       String
+  groupId    Int            @map("group_id")
+  group      InventoryGroup @relation(fields: [groupId], references: [id])
+  unitId     Int            @map("unit_id")
+  unit       Unit           @relation(fields: [unitId], references: [id])
+  gstRateId  Int            @map("gst_rate_id")
+  gstRate    GSTRate        @relation(fields: [gstRateId], references: [id])
+  openingQty Decimal        @map("opening_qty") @db.Decimal(18, 4)
+  barcode    String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  stockLots  StockLot[]
+
+  @@unique([companyId, name])
+}
+
+model StockLot {
+  id           Int           @id @default(autoincrement())
+  companyId    Int           @map("company_id")
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  itemId       Int           @map("item_id")
+  item         InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  voucherId    Int           @map("voucher_id")
+  voucher      Voucher       @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  date         DateTime
+  qty          Decimal       @db.Decimal(18, 4)
+  unitPrice    Decimal       @map("unit_price") @db.Decimal(18, 2)
+  qtyRemaining Decimal       @map("qty_remaining") @db.Decimal(18, 4)
+}

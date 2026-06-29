@@ -1,0 +1,158 @@
+<div class="shell-container" [class.sidebar-collapsed]="!isSidebarExpanded()" (click)="closeMenus()">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-text">Growmart</span>
+      </div>
+      <button class="toggle-btn" (click)="toggleSidebar(); $event.stopPropagation()">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+        <i data-lucide="layout-dashboard" class="nav-icon"></i>
+        <span class="nav-text">Dashboard</span>
+      </a>
+
+      @if (authService.currentUser()?.role === 'SUPER_ADMIN') {
+        <div class="nav-section">Administration</div>
+        <a class="nav-link" routerLink="/super-admin" routerLinkActive="active">
+          <i data-lucide="building-2" class="nav-icon"></i>
+          <span class="nav-text">Companies</span>
+        </a>
+      }
+
+      @if (authService.currentUser()?.role === 'SUPER_ADMIN' || authService.currentUser()?.role === 'ADMIN') {
+        <a class="nav-link" routerLink="/user-mgmt" routerLinkActive="active">
+          <i data-lucide="users" class="nav-icon"></i>
+          <span class="nav-text">Users</span>
+        </a>
+      }
+
+      <div class="nav-section">Accounting</div>
+      <a class="nav-link disabled-link" href="javascript:void(0)">
+        <i data-lucide="file-text" class="nav-icon"></i>
+        <span class="nav-text">Chart of Accounts</span>
+        <span class="lock-badge">Soon</span>
+      </a>
+      <a class="nav-link disabled-link" href="javascript:void(0)">
+        <i data-lucide="receipt" class="nav-icon"></i>
+        <span class="nav-text">Journal Entries</span>
+      </a>
+      <a class="nav-link disabled-link" href="javascript:void(0)">
+        <i data-lucide="trending-up" class="nav-icon"></i>
+        <span class="nav-text">Reports</span>
+      </a>
+
+      <div class="nav-section">Inventory</div>
+      <a class="nav-link disabled-link" href="javascript:void(0)">
+        <i data-lucide="package" class="nav-icon"></i>
+        <span class="nav-text">Products</span>
+      </a>
+      <a class="nav-link disabled-link" href="javascript:void(0)">
+        <i data-lucide="truck" class="nav-icon"></i>
+        <span class="nav-text">Stock Moves</span>
+      </a>
+    </nav>
+
+    <!-- User Profile Dropdown Menu -->
+    <div class="sidebar-footer">
+      <div class="user-pill" (click)="toggleUserMenu($event)">
+        <div class="user-avatar">
+          {{ authService.currentUser()?.name?.charAt(0) }}
+        </div>
+        <div class="user-meta">
+          <div class="user-name">{{ authService.currentUser()?.name }}</div>
+          <div class="user-role">{{ authService.currentUser()?.role }}</div>
+        </div>
+        <i data-lucide="chevron-up" class="chevron-indicator"></i>
+      </div>
+
+      <!-- Menu Popup -->
+      @if (isUserMenuOpen()) {
+        <div class="user-menu-dropdown" (click)="$event.stopPropagation()">
+          <div class="dropdown-header">
+            <strong>{{ authService.currentUser()?.name }}</strong>
+            <div class="dropdown-email">{{ authService.currentUser()?.email }}</div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="javascript:void(0)" class="dropdown-item">My Profile</a>
+          <a href="javascript:void(0)" class="dropdown-item" (click)="logout()">Sign Out</a>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- Main Wrapper -->
+  <div class="content-wrapper">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-btn" (click)="toggleSidebar(); $event.stopPropagation()">
+          <i data-lucide="menu"></i>
+        </button>
+        <span class="app-breadcrumb">Growmart ERP</span>
+      </div>
+
+      <!-- Global Search -->
+      <div class="header-center">
+        <div class="search-container">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="search-input" placeholder="Search..." />
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Switch Company Dropdown (Visible to Super Admin) -->
+        @if (authService.currentUser()?.role === 'SUPER_ADMIN') {
+          <div class="company-select-container">
+            <select
+              id="company-switcher"
+              class="company-select"
+              [value]="authService.currentUser()?.companyId || 'all'"
+              (change)="onCompanyChange($event)"
+            >
+              <option value="all">Global View</option>
+              @for (comp of companies(); track comp.id) {
+                <option [value]="comp.id">{{ comp.name }} ({{ comp.code }})</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- Active Scoped Company Badge -->
+        @if (authService.currentCompany(); as company) {
+          <div class="company-scoped-badge">
+            {{ company.name }}
+          </div>
+        }
+
+        <!-- Theme Toggle Switch -->
+        <div class="theme-toggle-container">
+          <button 
+            type="button" 
+            class="toggle-switch" 
+            [class.active]="!themeService.isDarkMode()" 
+            (click)="themeService.toggleTheme()"
+            title="Toggle light mode"
+          >
+            <span class="toggle-handle"></span>
+          </button>
+        </div>
+
+        <!-- Mini Avatar icon -->
+        <div class="mini-avatar" (click)="toggleUserMenu($event)">
+          {{ authService.currentUser()?.name?.charAt(0) }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Route View -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

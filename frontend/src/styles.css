@@ -1,0 +1,304 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Odoo 17 Inspired Theme Variables */
+:root {
+  --color-primary:        #714B67;   /* Odoo purple */
+  --color-primary-hover:  #5C3A55;
+  --color-primary-light:  #F3EEF1;   /* Tinted active bg */
+  --color-secondary:      #017E84;   /* Odoo teal */
+  --color-secondary-hover:#01676C;
+  --color-danger:         #D32F2F;
+  --color-success:        #2E7D32;
+  --color-warning:        #E65100;
+  --color-info:           #1565C0;
+
+  --bg-app:               #F0F0F0;   /* Light grey canvas */
+  --bg-surface:           #FFFFFF;   /* Cards, forms, sidebar */
+  --bg-surface-hover:     #F8F9FA;   /* Row hover */
+  --bg-surface-active:    #EDE3E9;   /* Active nav/selections */
+
+  --border-default:       #D0D0D0;
+  --border-light:         #E8E8E8;
+
+  --text-primary:         #212121;
+  --text-secondary:       #616161;
+  --text-muted:           #9E9E9E;
+  --text-inverse:         #FFFFFF;
+
+  --font-primary:         'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  --radius-sm:            4px;
+  --radius-md:            4px;
+  --radius-lg:            6px;
+  --radius-pill:          100px;
+
+  --shadow-none:          none;
+  --shadow-dropdown:      0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-modal:         0 8px 32px rgba(0, 0, 0, 0.16);
+
+  /* Typography Scales */
+  --text-xs:              11px;
+  --text-sm:              13px; /* DEFAULT body baseline */
+  --text-base:            14px;
+  --text-lg:              16px;
+  --text-xl:              20px;
+}
+
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+a {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Structural Layout Card */
+.page-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-none);
+}
+
+/* Standard Inputs & Controls */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.form-control {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(113, 75, 103, 0.15);
+}
+
+.form-control:disabled, .form-control[readonly] {
+  background-color: #F5F5F5;
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+textarea.form-control {
+  height: auto;
+  padding: 8px 10px;
+}
+
+.required-marker {
+  color: var(--color-danger);
+  margin-left: 2px;
+  font-weight: bold;
+}
+
+/* Custom Select styling */
+select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23616161' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 30px;
+}
+
+/* Odoo Flat Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 12px;
+  font-family: var(--font-primary);
+  font-weight: 500;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  gap: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--text-secondary);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--text-inverse);
+}
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Table Style System */
+.list-table-container {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  overflow: hidden;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.list-table th {
+  background-color: #F0F0F0;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.list-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-table tr:hover td {
+  background-color: var(--bg-surface-hover);
+}
+
+.list-table tr.selected td {
+  background-color: var(--color-primary-light);
+}
+
+/* Badges system */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+}
+
+.badge-role-super_admin {
+  background-color: #EDE3E9;
+  color: var(--color-primary);
+}
+
+.badge-role-admin {
+  background-color: #E3F2FD;
+  color: #1565C0;
+}
+
+.badge-role-accountant {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.badge-role-billing_staff {
+  background-color: #FFF3E0;
+  color: #E65100;
+}
+
+/* Monospace Company Code */
+.code-badge-mono {
+  font-family: monospace;
+  font-size: var(--text-xs);
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-default);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* Lucide Icon override alignment */
+i[data-lucide] {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  display: inline-block;
+  vertical-align: middle;
+}

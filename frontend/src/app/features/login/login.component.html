@@ -1,0 +1,58 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="logo-header">
+      <div class="logo-circle">G</div>
+      <h2>Growmart ERP</h2>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-alert">
+        <i data-lucide="x-circle" class="error-icon"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form (submit)="onSubmit(); $event.preventDefault()">
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          class="form-control"
+          placeholder="name@company.com"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          required
+        />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label" for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          class="form-control"
+          placeholder="••••••••"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-submit" [disabled]="isLoading()">
+        @if (isLoading()) {
+          Signing In...
+        } @else {
+          Sign In
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <a href="javascript:void(0)" class="forgot-link">Forgot password?</a>
+      <div class="credits">© 2025 Growmart ERP</div>
+    </div>
+  </div>
+</div>

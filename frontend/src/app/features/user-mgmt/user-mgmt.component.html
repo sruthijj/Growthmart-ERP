@@ -1,0 +1,262 @@
+<div class="user-mgmt-view animate-fade-in" (click)="isActionsDropdownOpen.set(false)">
+  <!-- Odoo Style Breadcrumb / Action Bar -->
+  <div class="breadcrumb-action-bar page-card">
+    <div class="breadcrumb-left">
+      <span class="breadcrumb-segment" (click)="discardChanges()">Users</span>
+      @if (viewMode() === 'form') {
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-segment active">{{ isEditing() ? name() : 'New' }}</span>
+      }
+    </div>
+    
+    <div class="action-buttons-right">
+      @if (viewMode() === 'list') {
+        <button class="btn btn-primary" (click)="showCreateForm()">
+          <i data-lucide="plus"></i> New User
+        </button>
+      } @else {
+        <button class="btn btn-primary" (click)="onSubmit()">
+          Save
+        </button>
+        <button class="btn btn-secondary" (click)="discardChanges()" [disabled]="isLoading()">
+          Discard
+        </button>
+
+        @if (isEditing()) {
+          <div class="dropdown-container">
+            <button class="btn btn-secondary" (click)="toggleActionsDropdown($event)">
+              Actions <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
+            </button>
+            @if (isActionsDropdownOpen()) {
+              <div class="actions-dropdown">
+                <a href="javascript:void(0)" class="dropdown-item" (click)="deleteActiveUser()">
+                  <i data-lucide="trash-2" style="width: 13px; height: 13px; color: var(--color-danger); margin-right: 6px;"></i> Delete
+                </a>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Messages Alerts -->
+  @if (successMessage()) {
+    <div class="alert alert-success" style="margin-top: 15px;">
+      <span>✅</span> {{ successMessage() }}
+    </div>
+  }
+  @if (errorMessage()) {
+    <div class="alert alert-danger" style="margin-top: 15px;">
+      <span>⚠️</span> {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- VIEW 1: LIST VIEW -->
+  @if (viewMode() === 'list') {
+    <div class="list-view-container" style="margin-top: 15px;">
+      <!-- Odoo Filter / Control Row -->
+      <div class="list-control-row page-card">
+        <div class="control-left">
+          <button class="btn btn-secondary btn-sm disabled-link">
+            <i data-lucide="filter" style="width: 13px; height: 13px;"></i> Filters <i data-lucide="chevron-down" style="width: 10px; height: 10px;"></i>
+          </button>
+          <button class="btn btn-secondary btn-sm disabled-link">
+            <i data-lucide="list-filter" style="width: 13px; height: 13px;"></i> Group By <i data-lucide="chevron-down" style="width: 10px; height: 10px;"></i>
+          </button>
+        </div>
+        <div class="control-right">
+          <span class="count-label">{{ users().length }} users</span>
+          <div class="pagination-controls">
+            <button class="pagination-btn disabled-link">←</button>
+            <span class="pagination-text">1-{{ users().length }} of {{ users().length }}</span>
+            <button class="pagination-btn disabled-link">→</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Data Table -->
+      @if (isLoading() && users().length === 0) {
+        <div class="loader-placeholder page-card">
+          <div class="spinner-simple"></div> Loading user registry...
+        </div>
+      } @else if (users().length === 0) {
+        <div class="empty-placeholder page-card">
+          <i data-lucide="users" class="empty-icon"></i>
+          <h4>No collaborators registered</h4>
+          <p>Register operators and grant permissions to access this company context.</p>
+          <button class="btn btn-primary" (click)="showCreateForm()">
+            <i data-lucide="plus"></i> Add User
+          </button>
+        </div>
+      } @else {
+        <div class="list-table-container">
+          <table class="list-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">
+                  <label for="select-all-checkbox" class="sr-only">Select All Users</label>
+                  <input
+                    id="select-all-checkbox"
+                    type="checkbox"
+                    (change)="toggleSelectAll($event)"
+                    [checked]="selectedUserIds().length === users().length && users().length > 0"
+                  />
+                </th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Backdate Limit</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (usr of users(); track usr.id) {
+                <tr 
+                  (click)="showEditForm(usr)" 
+                  class="clickable-row"
+                  [class.selected]="selectedUserIds().includes(usr.id)"
+                >
+                  <td style="text-align: center;" (click)="$event.stopPropagation()">
+                    <label [for]="'select-user-' + usr.id" class="sr-only">Select {{ usr.name }}</label>
+                    <input
+                      [id]="'select-user-' + usr.id"
+                      type="checkbox"
+                      [checked]="selectedUserIds().includes(usr.id)"
+                      (change)="toggleSelectUser(usr.id, $event)"
+                    />
+                  </td>
+                  <td style="font-weight: 500; color: var(--color-secondary);">{{ usr.name }}</td>
+                  <td>{{ usr.email }}</td>
+                  <td>
+                    <span 
+                      class="badge" 
+                      [class.badge-role-super_admin]="usr.role === 'SUPER_ADMIN'"
+                      [class.badge-role-admin]="usr.role === 'ADMIN'"
+                      [class.badge-role-accountant]="usr.role === 'ACCOUNTANT'"
+                      [class.badge-role-billing_staff]="usr.role === 'BILLING_STAFF'"
+                    >
+                      {{ usr.role }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (usr.role === 'SUPER_ADMIN') {
+                      <span class="text-muted">Uncapped</span>
+                    } @else {
+                      <span>⏱️ {{ usr.backdateDays }} Days</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- VIEW 2: FORM VIEW -->
+  @if (viewMode() === 'form') {
+    <div class="form-view-container" style="margin-top: 15px;">
+      <div class="glass-card form-page-card">
+        <!-- Form Header Status Bar -->
+        <div class="form-title-bar">
+          <h2 class="form-document-title">
+            {{ isEditing() ? name() : 'New Operator' }}
+          </h2>
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            {{ isEditing() ? 'Active' : 'Draft' }}
+          </div>
+        </div>
+
+        <form (submit)="onSubmit(); $event.preventDefault()">
+          <!-- Section 1 -->
+          <div class="form-section-title">Collaborator Profile</div>
+          
+          <div class="form-group">
+            <label class="form-label" for="name">Full Name<span class="required-marker">*</span></label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              class="form-control"
+              placeholder="e.g. Rachel Green"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address<span class="required-marker">*</span></label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              class="form-control"
+              placeholder="rachel@company.com"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">
+              Password {{ isEditing() ? '(Leave blank to retain current)' : '' }}
+              @if (!isEditing()) { <span class="required-marker">*</span> }
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              class="form-control"
+              placeholder="••••••••"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+              [required]="!isEditing()"
+            />
+          </div>
+
+          <!-- Section 2 -->
+          <div class="form-section-title">Role & Bounds Configuration</div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="role">Assigned Access Role<span class="required-marker">*</span></label>
+              <select
+                id="role"
+                name="role"
+                class="form-control form-select"
+                [ngModel]="role()"
+                (ngModelChange)="role.set($event)"
+                required
+              >
+                @for (r of rolesList; track r.value) {
+                  <option [value]="r.value">{{ r.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="backdateDays" title="Allowed number of days in the past the user can enter vouchers">
+                Backdate Window (Days)<span class="required-marker">*</span>
+              </label>
+              <input
+                id="backdateDays"
+                name="backdateDays"
+                type="number"
+                min="0"
+                max="365"
+                class="form-control"
+                [ngModel]="backdateDays()"
+                (ngModelChange)="backdateDays.set($event)"
+                required
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
